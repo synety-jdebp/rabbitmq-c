@@ -4,6 +4,10 @@
 .deps
 .dirstamp
 .libs
+*.tar.gz
+*.deb
+md5sums
+usr
 /aclocal.m4
 /autom4te.cache
 /config.guess
