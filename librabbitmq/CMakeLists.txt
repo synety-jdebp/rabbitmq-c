@@ -1,3 +1,4 @@
+# vim:set ts=2 sw=2 sts=2 et:
 project(librabbitmq "C")
 
 if (REGENERATE_AMQP_FRAMING)
@@ -75,31 +76,70 @@ set(LIBRABBITMQ_INCLUDE_DIRS
 
 add_definitions(-DHAVE_CONFIG_H)
 
+if (ENABLE_SSL_SUPPORT)
+  add_definitions(-DWITH_SSL=1)
+  set(AMQP_SSL_SOCKET_H_PATH amqp_ssl_socket.h)
+
+  if (SSL_ENGINE STREQUAL "OpenSSL")
+    set(AMQP_SSL_SRCS ${AMQP_SSL_SOCKET_H_PATH} amqp_openssl.c)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    set(AMQP_SSL_LIBS ${OPENSSL_LIBRARIES})
+
+  elseif (SSL_ENGINE STREQUAL "cyaSSL")
+    set(AMQP_SSL_SRCS ${AMQP_SSL_SOCKET_H_PATH} amqp_cyassl.c)
+    include_directories(${CYASSL_INCLUDE_DIR})
+    set(AMQP_SSL_LIBS ${CYASSL_LIBRARIES})
+
+  elseif (SSL_ENGINE STREQUAL "GnuTLS")
+    set(AMQP_SSL_SRCS ${AMQP_SSL_SOCKET_H_PATH} amqp_gnutls.c)
+    include_directories(${GNUTLS_INCLUDE_DIR})
+    add_definitions(${GNUTLS_DEFINITIONS})
+    set(AMQP_SSL_LIBS ${GNUTLS_LIBRARIES})
+
+  elseif (SSL_ENGINE STREQUAL "PolarSSL")
+    set(AMQP_SSL_SRCS ${AMQP_SSL_SOCKET_H_PATH} amqp_polarssl.c)
+    include_directories(${POLARSSL_INCLUDE_DIR})
+    set(AMQP_SSL_LIBS ${POLARSSL_LIBRARIES})
+
+  else()
+    message(FATAL_ERROR "Unknown SSL_ENGINE ${SSL_ENGINE}")
+  endif()
+
+  if (ENABLE_THREAD_SAFETY)
+    add_definitions(-DENABLE_THREAD_SAFETY)
+    if (WIN32)
+      set(AMQP_SSL_SRCS ${AMQP_SSL_SRCS} win32/threads.h win32/threads.c)
+    else()
+      set(AMQP_SSL_SRCS ${AMQP_SSL_SRCS} unix/threads.h)
+    endif()
+  endif()
+endif()
+
 set(RABBITMQ_SOURCES
     ${AMQP_FRAMING_H_PATH}
     ${AMQP_FRAMING_C_PATH}
-    amqp_api.c  amqp.h 
-    amqp_connection.c  amqp_mem.c  amqp_private.h  amqp_socket.c  amqp_table.c
-    amqp_url.c
-    ${SOCKET_IMPL}/socket.h ${SOCKET_IMPL}/socket.c
+    amqp_api.c amqp.h amqp_connection.c amqp_mem.c amqp_private.h amqp_socket.c
+    amqp_table.c amqp_url.c amqp_socket.h amqp_tcp_socket.c amqp_tcp_socket.h
+    amqp_timer.c amqp_timer.h
+    ${AMQP_SSL_SRCS}
 )
 
 add_definitions(-DAMQP_BUILD)
 
 include(InstallMacros)
 
+set(RMQ_LIBRARIES ${AMQP_SSL_LIBS} ${SOCKET_LIBRARIES} ${LIBRT} ${CMAKE_THREAD_LIBS_INIT})
+
 if (BUILD_SHARED_LIBS)
     add_library(rabbitmq SHARED ${RABBITMQ_SOURCES})
+
+    target_link_libraries(rabbitmq ${RMQ_LIBRARIES})
 
     if (WIN32)
         set_target_properties(rabbitmq PROPERTIES VERSION ${RMQ_VERSION} OUTPUT_NAME rabbitmq.${RMQ_SOVERSION})
     else (WIN32)
         set_target_properties(rabbitmq PROPERTIES VERSION ${RMQ_VERSION} SOVERSION ${RMQ_SOVERSION})
     endif (WIN32)
-
-    if (DEFINED SOCKET_LIBRARIES)
-      target_link_libraries(rabbitmq ${SOCKET_LIBRARIES})
-    endif ()
 
     install(TARGETS rabbitmq
         RUNTIME DESTINATION bin
@@ -114,16 +154,14 @@ endif (BUILD_SHARED_LIBS)
 if (BUILD_STATIC_LIBS)
     add_library(rabbitmq-static STATIC ${RABBITMQ_SOURCES})
 
+    target_link_libraries(rabbitmq-static ${RMQ_LIBRARIES})
+
     set_target_properties(rabbitmq-static PROPERTIES COMPILE_DEFINITIONS AMQP_STATIC)
     if (WIN32)
         set_target_properties(rabbitmq-static PROPERTIES VERSION ${RMQ_VERSION} OUTPUT_NAME librabbitmq.${RMQ_SOVERSION})
     else (WIN32)
         set_target_properties(rabbitmq-static PROPERTIES VERSION ${RMQ_VERSION} SOVERSION ${RMQ_SOVERSION} OUTPUT_NAME rabbitmq)
     endif (WIN32)
-
-    if (DEFINED SOCKET_LIBRARIES)
-      target_link_libraries(rabbitmq-static ${SOCKET_LIBRARIES})
-    endif ()
 
     install(TARGETS rabbitmq-static
         ARCHIVE DESTINATION lib
@@ -135,9 +173,13 @@ if (BUILD_STATIC_LIBS)
     endif ()
 endif (BUILD_STATIC_LIBS)
 
-install(FILES amqp.h ${AMQP_FRAMING_H_PATH} ${STDINT_H_INSTALL_FILE}
-	DESTINATION include
+install(FILES
+  amqp.h
+  ${AMQP_FRAMING_H_PATH}
+  amqp_tcp_socket.h
+  ${AMQP_SSL_SOCKET_H_PATH}
+  ${STDINT_H_INSTALL_FILE}
+  DESTINATION include
     )
 
 set(RMQ_LIBRARY_TARGET ${RMQ_LIBRARY_TARGET} PARENT_SCOPE)
-

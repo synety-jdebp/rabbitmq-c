@@ -1,3 +1,4 @@
+# vim:set ts=2 sw=2 sts=2 et:
 cmake_minimum_required(VERSION 2.6)
 project(rabbitmq-c "C")
 
@@ -99,6 +100,11 @@ else (WIN32)
   check_function_exists(htonll HAVE_HTONLL)
 endif (WIN32)
 cmake_pop_check_state()
+
+check_library_exists(rt clock_gettime "time.h" CLOCK_GETTIME_NEEDS_LIBRT)
+if (CLOCK_GETTIME_NEEDS_LIBRT)
+  set(LIBRT rt)
+endif()
 
 option(REGENERATE_AMQP_FRAMING "Regenerate amqp_framing.h/amqp_framing.c sources (for developer use)" OFF)
 mark_as_advanced(REGENERATE_AMQP_FRAMING)
@@ -206,6 +212,8 @@ if (POPT_FOUND AND XmlTo_FOUND)
   set(DO_DOCS ON)
 endif()
 
+find_package(Threads)
+
 option(BUILD_SHARED_LIBS "Build rabbitmq-c as a shared library" ON)
 option(BUILD_STATIC_LIBS "Build rabbitmq-c as a static library" OFF)
 
@@ -213,6 +221,29 @@ option(BUILD_EXAMPLES "Build Examples" ON)
 option(BUILD_TOOLS "Build Tools (requires POPT Library)" ${POPT_FOUND})
 option(BUILD_TOOLS_DOCS "Build man pages for Tools (requires xmlto)" ${DO_DOCS})
 option(BUILD_TESTS "Build tests (run tests with make test)" ON)
+option(ENABLE_SSL_SUPPORT "Enable SSL support" ON)
+option(ENABLE_THREAD_SAFETY "Enable thread safety when using OpenSSL" ${Threads_FOUND})
+
+set(SSL_ENGINE "OpenSSL" CACHE STRING "SSL Backend to use, valid options: OpenSSL, cyaSSL, GnuTLS, PolarSSL")
+mark_as_advanced(SSL_ENGINE)
+
+if (ENABLE_SSL_SUPPORT)
+  if (SSL_ENGINE STREQUAL "OpenSSL")
+    find_package(OpenSSL 0.9.8 REQUIRED)
+
+  elseif (SSL_ENGINE STREQUAL "cyaSSL")
+    find_package(cyaSSL REQUIRED)
+
+  elseif (SSL_ENGINE STREQUAL "GnuTLS")
+    find_package(GnuTLS REQUIRED)
+
+  elseif (SSL_ENGINE STREQUAL "PolarSSL")
+    find_package(PolarSSL REQUIRED)
+
+  else()
+    message(FATAL_ERROR "Unsupported SSL_ENGINE ${SSL_ENGINE}, valid engines: OpenSSL, cyaSSL, GnuTLS, or PolarSSL")
+  endif()
+endif()
 
 if (NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
     message(FATAL_ERROR "One or both of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be set to ON to build")
