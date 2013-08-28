@@ -1,7 +1,8 @@
 Source: librabbitmq
 Section: libs
 Priority: extra
-Maintainer: Tony Garnock-Jones <tonygarnockjones@gmail.com>
+#Maintainer: Tony Garnock-Jones <tonygarnockjones@gmail.com>
+Maintainer: Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>
 Build-Depends: debhelper (>= 7), autoconf, automake, cmake, libtool, python (>= 2.5), python-simplejson, libpopt-dev, xmlto
 Standards-Version: 3.8.1
 Homepage: http://www.rabbitmq.com/

@@ -2,6 +2,8 @@ This package was debianized by Tony Garnock-Jones
 <tonygarnockjones@gmail.com> on Tue, 14 Jul 2009 04:42:37 +0100.
 
 Upstream Author: The RabbitMQ team at VMware, Inc. <info@rabbitmq.net>
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Maintainer: Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>
 
 Copyright: Portions created by VMware are Copyright (c) 2007-2012
 VMware, Inc. All Rights Reserved. Portions created by Tony

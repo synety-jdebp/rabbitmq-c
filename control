@@ -1,9 +1,0 @@
-Package: librabbitmq-synety
-Version: 1.0
-Section: telephony
-Priority: optional
-Architecture: amd64
-Depends: libc6
-Maintainer: Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>
-Description: RabbitMQ
-Replaces: librabbitmq-dev, librabbitmq0
