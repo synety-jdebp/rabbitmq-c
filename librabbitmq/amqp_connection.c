@@ -40,6 +40,7 @@
 
 #include "amqp_tcp_socket.h"
 #include "amqp_private.h"
+#include "amqp_timer.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
@@ -90,6 +91,8 @@ amqp_connection_state_t amqp_new_connection(void)
     goto out_nomem;
   }
 
+  init_amqp_pool(&state->properties_pool, 512);
+
   return state;
 
 out_nomem:
@@ -106,18 +109,23 @@ int amqp_get_sockfd(amqp_connection_state_t state)
 void amqp_set_sockfd(amqp_connection_state_t state,
                      int sockfd)
 {
-  amqp_socket_t *socket = amqp_tcp_socket_new();
+  amqp_socket_t *socket = amqp_tcp_socket_new(state);
   if (!socket) {
     amqp_abort("%s", strerror(errno));
   }
   amqp_tcp_socket_set_sockfd(socket, sockfd);
-  amqp_set_socket(state, socket);
 }
 
 void amqp_set_socket(amqp_connection_state_t state, amqp_socket_t *socket)
 {
-  amqp_socket_close(state->socket);
+  amqp_socket_delete(state->socket);
   state->socket = socket;
+}
+
+amqp_socket_t *
+amqp_get_socket(amqp_connection_state_t state)
+{
+  return state->socket;
 }
 
 int amqp_tune_connection(amqp_connection_state_t state,
@@ -132,6 +140,15 @@ int amqp_tune_connection(amqp_connection_state_t state,
   state->channel_max = channel_max;
   state->frame_max = frame_max;
   state->heartbeat = heartbeat;
+
+  if (amqp_heartbeat_enabled(state)) {
+    uint64_t current_time = amqp_get_monotonic_timestamp();
+    if (0 == current_time) {
+      return AMQP_STATUS_TIMER_FAILURE;
+    }
+    state->next_send_heartbeat = amqp_calc_next_send_heartbeat(state, current_time);
+    state->next_recv_heartbeat = amqp_calc_next_recv_heartbeat(state, current_time);
+  }
 
   state->outbound_buffer.len = frame_max;
   newbuf = realloc(state->outbound_buffer.bytes, frame_max);
@@ -165,7 +182,8 @@ int amqp_destroy_connection(amqp_connection_state_t state)
 
     free(state->outbound_buffer.bytes);
     free(state->sock_inbound_buffer.bytes);
-    status = amqp_socket_close(state->socket);
+    amqp_socket_delete(state->socket);
+    empty_amqp_pool(&state->properties_pool);
     free(state);
   }
   return status;
@@ -489,6 +507,14 @@ int amqp_send_frame(amqp_connection_state_t state,
     amqp_e8(out_frame, out_frame_len + HEADER_SIZE, AMQP_FRAME_END);
     res = amqp_socket_send(state->socket, out_frame,
                            out_frame_len + HEADER_SIZE + FOOTER_SIZE);
+  }
+
+  if (state->heartbeat > 0) {
+    uint64_t current_time = amqp_get_monotonic_timestamp();
+    if (0 == current_time) {
+      return AMQP_STATUS_TIMER_FAILURE;
+    }
+    state->next_send_heartbeat = amqp_calc_next_send_heartbeat(state, current_time);
   }
 
   return res;

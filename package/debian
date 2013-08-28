@@ -20,25 +20,28 @@ d="$t"
 	do
 		dir="`dirname $i`"
 		# Try to create a hard link, and fall back to a symbolic link.
-		# The source and build directories aren't necessarily on the same disc volume.
+		# The source and build directories are not necessarily on the same disc volume.
 		ln -f "$d"/"$i" "${dir}"/"$i" 2>/dev/null || ln -s -f "$d"/"$i" "${dir}"/"$i"
 	done
 )
 
 # Create and populate the debian directory.
-d="$t/debian"
+d="$t/package"
 mkdir -p debian
 (
 	cd "$d"
-	ls -1
+	for i in control copyright changelog rules compat amqp-tools.docs amqp-tools.install librabbitmq1-dev.docs librabbitmq1-dev.install librabbitmq1.docs librabbitmq1.install
+	do
+		echo "$i"
+	done
 ) | (
 	cd debian	# The syntax of ln -s makes more sense if we are in the target directory.
 	while read i
 	do
 		dir="`dirname $i`"
 		# Try to create a hard link, and fall back to a symbolic link.
-		# The source and build directories aren't necessarily on the same disc volume.
-		ln -f "$d"/"$i" "${dir}"/"$i" 2>/dev/null || ln -s -f "$d"/"$i" "${dir}"/"$i"
+		# The source and build directories are not necessarily on the same disc volume.
+		ln -f "$d"/debian-"$i" "${dir}"/"$i" 2>/dev/null || ln -s -f "$d"/debian-"$i" "${dir}"/"$i"
 	done
 )
 

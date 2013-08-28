@@ -40,9 +40,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "common.h"
 #include "process.h"
+
+#define MAX_LISTEN_KEYS 1024
+#define LISTEN_KEYS_DELIMITER ","
 
 /* Convert a amqp_bytes_t to an escaped string form for printing.  We
    use the same escaping conventions as rabbitmqctl. */
@@ -71,9 +75,15 @@ static char *stringify_bytes(amqp_bytes_t bytes)
 
 static amqp_bytes_t setup_queue(amqp_connection_state_t conn,
                                 char *queue, char *exchange,
-                                char *routing_key, int declare)
+                                char *routing_key, int declare,
+                                int exclusive)
 {
   amqp_bytes_t queue_bytes = cstring_bytes(queue);
+
+  char *routing_key_rest;
+  char *routing_key_token;
+  char *routing_tmp;
+  int routing_key_count = 0;
 
   /* if an exchange name wasn't provided, check that we don't
      have options that require it. */
@@ -83,10 +93,10 @@ static amqp_bytes_t setup_queue(amqp_connection_state_t conn,
     exit(1);
   }
 
-  if (!queue || exchange || declare) {
+  if (!queue || exchange || declare || exclusive) {
     /* Declare the queue as auto-delete.  */
     amqp_queue_declare_ok_t *res = amqp_queue_declare(conn, 1,
-                                   queue_bytes, 0, 0, 1, 1,
+                                   queue_bytes, 0, 0, exclusive, 1,
                                    amqp_empty_table);
     if (!res) {
       die_rpc(amqp_get_rpc_reply(conn), "queue.declare");
@@ -105,11 +115,26 @@ static amqp_bytes_t setup_queue(amqp_connection_state_t conn,
     /* Bind to an exchange if requested */
     if (exchange) {
       amqp_bytes_t eb = amqp_cstring_bytes(exchange);
-      if (!amqp_queue_bind(conn, 1, queue_bytes, eb,
-                           cstring_bytes(routing_key),
-                           amqp_empty_table))
-        die_rpc(amqp_get_rpc_reply(conn),
-                "queue.bind");
+
+      routing_tmp = strdup( routing_key );
+      if ( NULL == routing_tmp ) {
+        fprintf(stderr,	"could not allocate memory to parse routing key\n" );
+        exit(1);
+      }
+
+      for (
+        routing_key_token = strtok_r( routing_tmp, LISTEN_KEYS_DELIMITER, &routing_key_rest )
+                            ; NULL != routing_key_token && routing_key_count < MAX_LISTEN_KEYS - 1
+        ; routing_key_token = strtok_r( NULL, LISTEN_KEYS_DELIMITER, &routing_key_rest )
+      ) {
+
+        if (!amqp_queue_bind(conn, 1, queue_bytes, eb,
+                             cstring_bytes(routing_key_token),
+                             amqp_empty_table)) {
+          die_rpc(amqp_get_rpc_reply(conn), "queue.bind");
+        }
+      }
+      free( routing_tmp );
     }
   }
 
@@ -169,6 +194,7 @@ int main(int argc, const char **argv)
   char *exchange = NULL;
   char *routing_key = NULL;
   int declare = 0;
+  int exclusive = 0;
   int no_ack = 0;
   int count = -1;
   amqp_bytes_t queue_bytes;
@@ -189,7 +215,11 @@ int main(int argc, const char **argv)
     },
     {
       "declare", 'd', POPT_ARG_NONE, &declare, 0,
-      "declare an exclusive queue", NULL
+      "declare an exclusive queue (deprecated, use --exclusive instead)", NULL
+    },
+    {
+      "exclusive", 'x', POPT_ARG_NONE, &exclusive, 0,
+      "declare the queue as exclusive", NULL
     },
     {
       "no-ack", 'A', POPT_ARG_NONE, &no_ack, 0,
@@ -215,7 +245,7 @@ int main(int argc, const char **argv)
   }
 
   conn = make_connection();
-  queue_bytes = setup_queue(conn, queue, exchange, routing_key, declare);
+  queue_bytes = setup_queue(conn, queue, exchange, routing_key, declare, exclusive);
   do_consume(conn, queue_bytes, no_ack, count, cmd_argv);
   close_connection(conn);
   return 0;
