@@ -60,12 +60,25 @@
 # include <sys/types.h>      /* On older BSD this must come before net includes */
 # include <netinet/in.h>
 # include <netinet/tcp.h>
+# include <sys/utsname.h>
 # include <sys/socket.h>
 # include <netdb.h>
 # include <sys/uio.h>
 # include <fcntl.h>
 # include <unistd.h>
 #endif
+
+static const char *
+amqp_os_socket_platform(void)
+{
+#ifdef _WIN32
+	return "Win32";
+#else
+	struct utsname u;
+	if (0 > uname(&u)) return "Unknown";
+	return u.sysname;
+#endif
+}
 
 static int
 amqp_os_socket_init(void)
@@ -707,7 +720,7 @@ static amqp_rpc_reply_t amqp_login_inner(amqp_connection_state_t state,
   }
 
   {
-    amqp_table_entry_t default_properties[2];
+    amqp_table_entry_t default_properties[5];
     amqp_table_t default_table;
     amqp_connection_start_ok_t s;
     amqp_pool_t *channel_pool;
@@ -735,6 +748,21 @@ static amqp_rpc_reply_t amqp_login_inner(amqp_connection_state_t state,
     default_properties[1].value.kind = AMQP_FIELD_KIND_UTF8;
     default_properties[1].value.value.bytes =
       amqp_cstring_bytes("See https://github.com/alanxz/rabbitmq-c");
+
+    default_properties[2].key = amqp_cstring_bytes("version");
+    default_properties[2].value.kind = AMQP_FIELD_KIND_UTF8;
+    default_properties[2].value.value.bytes =
+      amqp_cstring_bytes(VERSION);
+
+    default_properties[3].key = amqp_cstring_bytes("platform");
+    default_properties[3].value.kind = AMQP_FIELD_KIND_UTF8;
+    default_properties[3].value.value.bytes =
+      amqp_cstring_bytes(amqp_os_socket_platform());
+
+    default_properties[4].key = amqp_cstring_bytes("copyright");
+    default_properties[4].value.kind = AMQP_FIELD_KIND_UTF8;
+    default_properties[4].value.value.bytes =
+      amqp_cstring_bytes("Copyright (c) 2007-2013 VMWare Inc, Tony Garnock-Jones, and Alan Antonuk.");
 
     default_table.entries = default_properties;
     default_table.num_entries = sizeof(default_properties) / sizeof(amqp_table_entry_t);
