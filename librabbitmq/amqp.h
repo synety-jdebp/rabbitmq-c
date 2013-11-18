@@ -715,6 +715,17 @@ typedef enum amqp_status_enum_
   AMQP_STATUS_SSL_CONNECTION_FAILED =     -0x0203  /**< SSL handshake failed. */
 } amqp_status_enum;
 
+/**
+ * AMQP delivery modes.
+ * Use these values for the #amqp_basic_properties_t::delivery_mode field.
+ *
+ * \since v0.5
+ */
+typedef enum {
+	AMQP_DELIVERY_NONPERSISTENT = 1, /**< Non-persistent message */
+	AMQP_DELIVERY_PERSISTENT = 2 /**< Persistent message */
+} amqp_delivery_mode_enum;
+
 AMQP_END_DECLS
 
 #include <amqp_framing.h>
@@ -1873,7 +1884,7 @@ AMQP_CALL amqp_connection_close(amqp_connection_state_t state, int code);
  *
  * \param [in] state the connection object
  * \param [in] channel the channel identifier
- * \param [in] delivery_tag the delivery take of the message to be ack'd
+ * \param [in] delivery_tag the delivery tag of the message to be ack'd
  * \param [in] multiple if true, ack all messages up to this delivery tag, if
  *              false ack only this delivery tag
  * \return 0 on success,  0 > on failing to send the ack to the broker.
@@ -2152,7 +2163,7 @@ typedef struct amqp_envelope_t_ {
  *
  * \param [in,out] state the connection object
  * \param [in,out] envelope a pointer to a amqp_envelope_t object. Caller
- *                 should call amqp_envelope_destroy() when it is done using
+ *                 should call #amqp_destroy_envelope() when it is done using
  *                 the fields in the envelope object. The caller is responsible
  *                 for allocating/destroying the amqp_envelope_t object itself.
  * \param [in] timeout a timeout to wait for a message delivery. Passing in
