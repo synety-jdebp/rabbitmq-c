@@ -44,5 +44,3 @@ mkdir -p debian
 		ln -f "$d"/debian-"$i" "${dir}"/"$i" 2>/dev/null || ln -s -f "$d"/debian-"$i" "${dir}"/"$i"
 	done
 )
-
-dpkg-buildpackage -b -nc -uc

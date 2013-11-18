@@ -2,17 +2,19 @@
 
 build: build-stamp
 build-stamp:
+	make
 	dh build
 	touch build-stamp
 
 clean:
-	dh clean
+	dh_clean
 	rm -f build-stamp
 	rm -f install-stamp
 
 install: build install-stamp
 install-stamp:
-	dh install
+	make install
+	dh_install
 	touch install-stamp
 
 binary-arch: install
@@ -22,3 +24,4 @@ binary-indep: install
 	dh binary-indep
 
 binary: binary-arch binary-indep
+	dh_builddeb
