@@ -1,6 +1,7 @@
 librabbitmq (1.0.1-2synety) unstable; urgency=low
 
   * SYNETY version
+  * Added amqp_login_noblock() and _noblock() versions of lower level functions it uses as necessary.
 
  -- Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>  Tue, 27 Aug 2013 00:00:00 +0000
 
