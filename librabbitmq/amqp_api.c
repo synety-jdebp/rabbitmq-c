@@ -251,9 +251,11 @@ int amqp_basic_publish(amqp_connection_state_t state,
   return AMQP_STATUS_OK;
 }
 
-amqp_rpc_reply_t amqp_channel_close(amqp_connection_state_t state,
-                                    amqp_channel_t channel,
-                                    int code)
+amqp_rpc_reply_t amqp_channel_close_noblock(
+	amqp_connection_state_t state,
+	amqp_channel_t channel,
+	int code,
+	struct timeval *timeout)
 {
   char codestr[13];
   amqp_method_number_t replies[2] = { AMQP_CHANNEL_CLOSE_OK_METHOD, 0};
@@ -265,12 +267,21 @@ amqp_rpc_reply_t amqp_channel_close(amqp_connection_state_t state,
   req.class_id = 0;
   req.method_id = 0;
 
-  return amqp_simple_rpc(state, channel, AMQP_CHANNEL_CLOSE_METHOD,
-                         replies, &req);
+  return amqp_simple_rpc_noblock(state, channel, 
+				AMQP_CHANNEL_CLOSE_METHOD, replies, 
+				&req, timeout);
 }
 
-amqp_rpc_reply_t amqp_connection_close(amqp_connection_state_t state,
-                                       int code)
+amqp_rpc_reply_t amqp_channel_close(amqp_connection_state_t state,
+                                    amqp_channel_t channel,
+                                    int code)
+{
+	return amqp_channel_close_noblock(state, channel, code, NULL);
+}
+
+amqp_rpc_reply_t amqp_connection_close_noblock(amqp_connection_state_t state,
+                                               int code,
+                                               struct timeval *timeout)
 {
   char codestr[13];
   amqp_method_number_t replies[2] = { AMQP_CONNECTION_CLOSE_OK_METHOD, 0};
@@ -282,8 +293,14 @@ amqp_rpc_reply_t amqp_connection_close(amqp_connection_state_t state,
   req.class_id = 0;
   req.method_id = 0;
 
-  return amqp_simple_rpc(state, 0, AMQP_CONNECTION_CLOSE_METHOD,
-                         replies, &req);
+  return amqp_simple_rpc_noblock(state, 0, AMQP_CONNECTION_CLOSE_METHOD,
+                                 replies, &req, timeout);
+}
+
+amqp_rpc_reply_t amqp_connection_close(amqp_connection_state_t state,
+                                       int code)
+{
+	return amqp_connection_close_noblock(state, code, NULL);
 }
 
 int amqp_basic_ack(amqp_connection_state_t state,

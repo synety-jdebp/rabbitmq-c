@@ -1616,6 +1616,48 @@ AMQP_CALL amqp_simple_rpc(amqp_connection_state_t state,
  * \param [in] state the connection object
  * \param [in] channel the channel object
  * \param [in] request_id the method number of the request
+ * \param [in] expected_reply_ids a 0 terminated array of expected response
+ *             method numbers
+ * \param [in] decoded_request_method the method to be sent to the broker
+ * \param [in] timeout an optional timeout, NULL for infinite
+ * \return a amqp_rpc_reply_t:
+ *  - r.reply_type == AMQP_RESPONSE_NORMAL. RPC completed successfully
+ *  - r.reply_type == AMQP_RESPONSE_SERVER_EXCEPTION. The broker returned an
+ *    exception:
+ *    - If r.reply.id == AMQP_CHANNEL_CLOSE_METHOD a channel exception
+ *      occurred, cast r.reply.decoded to amqp_channel_close_t* to see details
+ *      of the exception. The client should amqp_send_method() a
+ *      amqp_channel_close_ok_t. The channel must be re-opened before it
+ *      can be used again. Any resources associated with the channel
+ *      (auto-delete exchanges, auto-delete queues, consumers) are invalid
+ *      and must be recreated before attempting to use them again.
+ *    - If r.reply.id == AMQP_CONNECTION_CLOSE_METHOD a connection exception
+ *      occurred, cast r.reply.decoded to amqp_connection_close_t* to see
+ *      details of the exception. The client amqp_send_method() a
+ *      amqp_connection_close_ok_t and disconnect from the broker.
+ *  - r.reply_type == AMQP_RESPONSE_LIBRARY_EXCEPTION. An exception occurred
+ *    within the library. Examine r.library_error and compare it against
+ *    amqp_status_enum values to determine the error.
+ *
+ * \sa amqp_simple_rpc_decoded()
+ *
+ * \since v1.0.1
+ */
+AMQP_PUBLIC_FUNCTION
+amqp_rpc_reply_t
+AMQP_CALL amqp_simple_rpc_noblock(amqp_connection_state_t state,
+                                  amqp_channel_t channel,
+                                  amqp_method_number_t request_id,
+                                  amqp_method_number_t *expected_reply_ids,
+                                  void *decoded_request_method,
+				  struct timeval *timeout);
+
+/**
+ * Sends a method to the broker and waits for a method response
+ *
+ * \param [in] state the connection object
+ * \param [in] channel the channel object
+ * \param [in] request_id the method number of the request
  * \param [in] reply_id the method number expected in response
  * \param [in] decoded_request_method the request method
  * \return a pointer to the method returned from the broker, or NULL on error.
@@ -1907,6 +1949,22 @@ AMQP_CALL amqp_basic_publish(amqp_connection_state_t state, amqp_channel_t chann
                              amqp_bytes_t body);
 
 /**
+ * Closes a channel
+ *
+ * \param [in] state the connection object
+ * \param [in] channel the channel identifier
+ * \param [in] code the reason for closing the channel, AMQP_REPLY_SUCCESS is a good default
+ * \param [in] timeout an optional timeout, NULL for no timeout
+ * \return amqp_rpc_reply_t indicating success or failure
+ *
+ * \since v1.0.1
+ */
+AMQP_PUBLIC_FUNCTION
+amqp_rpc_reply_t
+AMQP_CALL amqp_channel_close_noblock(amqp_connection_state_t state, amqp_channel_t channel,
+                                     int code, struct timeval *timeout);
+
+/**
  * Closes an channel
  *
  * \param [in] state the connection object
@@ -1930,10 +1988,30 @@ AMQP_CALL amqp_channel_close(amqp_connection_state_t state, amqp_channel_t chann
  *
  * \param [in] state the connection object
  * \param [in] code the reason code for closing the connection. AMQP_REPLY_SUCCESS is a good default.
+ * \param [in] timeout an optional timeout, NULL for no timeout
+ * \return amqp_rpc_reply_t indicating the result
+ *
+ * \since v1.0.1
+ */
+AMQP_PUBLIC_FUNCTION
+amqp_rpc_reply_t
+AMQP_CALL amqp_connection_close_noblock(amqp_connection_state_t state, int code, 
+		                        struct timeval *timeout);
+
+/**
+ * Closes the entire connection
+ *
+ * Implicitly closes all channels and informs the broker the connection
+ * is being closed, after receiving acknowldgement from the broker it closes
+ * the socket.
+ *
+ * \param [in] state the connection object
+ * \param [in] code the reason code for closing the connection. AMQP_REPLY_SUCCESS is a good default.
  * \return amqp_rpc_reply_t indicating the result
  *
  * \since v0.1
  */
+
 AMQP_PUBLIC_FUNCTION
 amqp_rpc_reply_t
 AMQP_CALL amqp_connection_close(amqp_connection_state_t state, int code);

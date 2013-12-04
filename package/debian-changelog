@@ -1,9 +1,17 @@
+librabbitmq (1.0.1-2synety1) UNRELEASED; urgency=low
+
+  * Next version.
+
+ -- Jonathan de Boyne Pollard <jdebp@jonathan-debian-1>  Fri, 22 Nov 2013 11:59:57 +0000
+
 librabbitmq (1.0.1-2synety) unstable; urgency=low
 
   * SYNETY version
   * Added amqp_login_noblock() and _noblock() versions of lower level functions it uses as necessary.
+  * Added amqp_channel_close_noblock(), similarly.
+  * Added amqp_connection_close_noblock(), similarly.
 
- -- Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>  Tue, 27 Aug 2013 00:00:00 +0000
+ -- Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>  Fri, 22 Nov 2013 12:30:00 +0000
 
 librabbitmq (1.0.1-1ubuntu1) precise; urgency=low
 
