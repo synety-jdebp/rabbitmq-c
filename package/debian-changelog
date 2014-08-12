@@ -1,9 +1,3 @@
-librabbitmq (1.0.1-2synety1) UNRELEASED; urgency=low
-
-  * Next version.
-
- -- Jonathan de Boyne Pollard <jdebp@jonathan-debian-1>  Fri, 22 Nov 2013 11:59:57 +0000
-
 librabbitmq (1.0.1-2synety) unstable; urgency=low
 
   * SYNETY version
