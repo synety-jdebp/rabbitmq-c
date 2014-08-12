@@ -26,6 +26,9 @@
 #include <stdint.h>
 
 #ifdef _WIN32
+# ifndef WINVER
+#  define WINVER 0x0502
+# endif
 # ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
 # endif
@@ -34,7 +37,10 @@
 # include <sys/time.h>
 #endif
 
-#define AMQP_NS_PER_S 1000000000
+#define AMQP_MS_PER_S  1000
+#define AMQP_US_PER_MS 1000
+#define AMQP_NS_PER_S  1000000000
+#define AMQP_NS_PER_MS 1000000
 #define AMQP_NS_PER_US 1000
 
 #define AMQP_INIT_TIMER(structure) { \
@@ -58,4 +64,3 @@ int
 amqp_timer_update(amqp_timer_t *timer, struct timeval *timeout);
 
 #endif /* AMQP_TIMER_H */
-

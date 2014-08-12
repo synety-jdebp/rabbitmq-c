@@ -48,8 +48,6 @@
 #define AMQP_END_DECLS
 #endif
 
-
-
 /*
  * \internal
  * Important API decorators:
@@ -115,7 +113,6 @@
 # define AMQP_CALL __cdecl
 
 #elif defined(__GNUC__) && __GNUC__ >= 4
-# include <sys/uio.h>
 # define AMQP_PUBLIC_FUNCTION \
   __attribute__ ((visibility ("default")))
 # define AMQP_PUBLIC_VARIABLE \
@@ -154,6 +151,10 @@ typedef __int64 ssize_t;
 #else
 typedef _W64 int ssize_t;
 #endif
+#endif
+
+#if defined(_WIN32) && defined(__MINGW32__)
+#include <sys/types.h>
 #endif
 
 /** \endcond */
@@ -223,7 +224,7 @@ AMQP_BEGIN_DECLS
 
 #define AMQP_VERSION_MAJOR 0
 #define AMQP_VERSION_MINOR 5
-#define AMQP_VERSION_PATCH 0
+#define AMQP_VERSION_PATCH 2
 #define AMQP_VERSION_IS_RELEASE 0
 
 

@@ -12,9 +12,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # 3. If any interfaces have been added since the last public release, then increment age.
 # 4. If any interfaces have been removed since the last public release, then set age to 0.
 
-set(RMQ_SOVERSION_CURRENT   2)
+set(RMQ_SOVERSION_CURRENT   3)
 set(RMQ_SOVERSION_REVISION  1)
-set(RMQ_SOVERSION_AGE       1)
+set(RMQ_SOVERSION_AGE       2)
 
 math(EXPR RMQ_SOVERSION_MAJOR "${RMQ_SOVERSION_CURRENT} - ${RMQ_SOVERSION_AGE}")
 math(EXPR RMQ_SOVERSION_MINOR "${RMQ_SOVERSION_AGE}")
@@ -103,7 +103,7 @@ set(CMAKE_REQUIRED_LIBRARIES ${SOCKET_LIBRARIES})
 if (WIN32)
   check_symbol_exists(htonll Winsock2.h HAVE_HTONLL)
 else (WIN32)
-  check_function_exists(htonll HAVE_HTONLL)
+  check_symbol_exists(htonll arpa/inet.h HAVE_HTONLL)
 endif (WIN32)
 cmake_pop_check_state()
 

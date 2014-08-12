@@ -1,4 +1,51 @@
 # Change Log
+## Changes since v0.5.0 (a.k.a., v0.5.1)
+### Enhancements:
+- `a566929` SSL: Add support for wildcards in hostname verification (Mike
+  Steinert)
+- `a78aa8a` Lib: Use poll(2) instead of select(2) for timeouts on sockets.
+- `357bdb3` Lib: support for specifying frame and decoding pool sizes. (Mike
+  Stitt)
+- `8956003` Lib: improve invalid frame detection code.
+
+### Bug fixes:
+- `b852f84` Lib: Add missing amqp_get_server_properties() function.
+- `7001e82` Lib: Add missing ssize_t on Win32 (emazv72)
+- `c2ce2cb` Lib: Correctly specify WINVER on Win32 when unspecified.
+- `fe844e4` CMake: specify -DHAVE_CONFIG_H in examples.
+- `932de5f` Lib: correct time computation on Win32 (jestor)
+- `3e83192` HPUX: use gethrtime on HP-UX for timers.
+- `cb1b44e` HPUX: correct include location of sys/uio.h
+- `8ce585d` Lib: incorrect OOM condition when 0-lenth exchange name is received.
+- `c7716b8` CMake: correct htonll detection code on platforms defined with a
+  macro.
+- `4dc4eda` Lib: remove unused assignment.
+- `45302cf` Lib: remove range-check of channel-ids.
+
+
+## Changes since v0.4.1 (a.k.a., v0.5.0):
+### Major changes:
+- Add amqp_get_broker_properties() function 5c7c40adc1
+- Remove distro-specific packaging a5749657ee
+- Add -x flag to amqp-consume utilty 1d9c5291ff
+- Add amqp_basic_nack() public API 9b168776fb
+- Add delivery mode constants to amqp.h 5f291ea772
+- Add support for connection.blocked/connection.unblocked methods ccbc24d270
+
+### Bug fixes:
+- `f8c6cee749` Examples: Destroy amqp_envelope_t in consumer example
+- `ac88db56d3` CMake: fix generation of librabbitmq.pc
+- `d5b35afa40` CMake: fix missing POPT_INCLUDE_DIRS variable in tools/
+- `5ea6a0945a` build: provide independent locations for x64 libs
+- `fac34656c0` Doc: documentation fixes
+- `715901d675` Lib: Correct OpenSSL initialization under threaded conditions
+- `ce64e57df8` Examples: Handle unexpected frames in amqp_consumer.c
+- `bcda3e933d` CMake: Use GnuInstallDirs to generate install dirs
+- `27245a4e15` Lib: correctly handle amqp_get_monotonic_timestamp on win32
+- `693662ef5b` Tools: honor --persistent flag in publish utility
+- `01d9c3ca60` Doc: improve documentation in amqp_ssl_socket functions
+- `02d5c58ae4` autoconf: correct librabbitmq.pc generation
+- `1f4e0cc48b` Doc: improve documentation in amqp_tcp_socket functions
 
 ## Changes since v0.4.0:
 ### Major changes:
