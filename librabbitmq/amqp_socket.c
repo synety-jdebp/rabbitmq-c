@@ -1453,3 +1453,28 @@ amqp_rpc_reply_t amqp_login_with_properties(amqp_connection_state_t state,
 
   return ret;
 }
+
+amqp_rpc_reply_t amqp_login_noblock_with_properties(
+    amqp_connection_state_t state,
+    char const *vhost,
+    int channel_max,
+    int frame_max,
+    int heartbeat,
+    struct timeval *timeout,
+    const amqp_table_t *client_properties,
+    amqp_sasl_method_enum sasl_method,
+    ...)
+{
+  va_list vl;
+  amqp_rpc_reply_t ret;
+
+  va_start(vl, sasl_method);
+
+  ret = amqp_login_inner(state, vhost, channel_max, frame_max, heartbeat,
+			 timeout,
+                         client_properties, sasl_method, vl);
+
+  va_end(vl);
+
+  return ret;
+}

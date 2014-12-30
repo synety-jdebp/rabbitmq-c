@@ -1,3 +1,9 @@
+librabbitmq (1.0.1-2synety1) unstable; urgency=low
+
+  * Added amqp_login_noblock_with_properties().
+
+ -- Jonathan de Boyne Pollard <jonathan.de.boyne.pollard@synety.com>  Tue, 29 Dec 2014 12:02:00 +0000
+
 librabbitmq (1.0.1-2synety) unstable; urgency=low
 
   * SYNETY version
